@@ -3,33 +3,34 @@
 
 package com.azure.cosmos.implementation.directconnectivity.rntbd;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import io.netty.buffer.ByteBuf;
 import io.netty.handler.codec.CorruptedFrameException;
-
-import java.util.stream.Collector;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectMap;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
 
 import static com.azure.cosmos.implementation.directconnectivity.rntbd.RntbdConstants.RntbdHeader;
-import static com.google.common.base.Preconditions.checkNotNull;
 import static com.azure.cosmos.implementation.guava27.Strings.lenientFormat;
+import static com.google.common.base.Preconditions.checkNotNull;
 
 @SuppressWarnings("UnstableApiUsage")
 abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> {
 
     final ByteBuf in;
-    final ImmutableMap<Short, T> headers;
-    final ImmutableMap<T, RntbdToken> tokens;
+    final Short2ObjectMap<T> headers;
+    final Short2ObjectMap<RntbdToken> tokens;
 
-    RntbdTokenStream(final ImmutableSet<T> headers, final ImmutableMap<Short, T> ids, final ByteBuf in) {
+    RntbdTokenStream(final ImmutableSet<T> headers, final Short2ObjectMap<T> ids, final ByteBuf in) {
 
         checkNotNull(headers, "headers");
         checkNotNull(ids, "ids");
         checkNotNull(in, "in");
 
-        final Collector<T, ?, ImmutableMap<T, RntbdToken>> collector = Maps.toImmutableEnumMap(h -> h, RntbdToken::create);
-        this.tokens = headers.stream().collect(collector);
+        this.tokens = new Short2ObjectOpenHashMap<>(headers.size());
+        for(T h: headers) {
+            this.tokens.put(h.id(), RntbdToken.create(h));
+        }
+
         this.headers = ids;
         this.in = in.retain();
     }
@@ -67,7 +68,7 @@ abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> {
             final short id = in.readShortLE();
             final RntbdTokenType type = RntbdTokenType.fromId(in.readByte());
 
-            RntbdToken token = stream.tokens.get(stream.headers.get(id));
+            RntbdToken token = stream.tokens.get(id);
 
             if (token == null) {
                 token = RntbdToken.create(new UndefinedHeader(id, type));
@@ -93,7 +94,7 @@ abstract class RntbdTokenStream<T extends Enum<T> & RntbdHeader> {
     }
 
     final RntbdToken get(final T header) {
-        return this.tokens.get(header);
+        return this.tokens.get(header.id());
     }
 
     final void releaseBuffers() {

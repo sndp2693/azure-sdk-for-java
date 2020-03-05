@@ -7,6 +7,8 @@ import com.azure.cosmos.implementation.guava27.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectMap;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
 
 import java.util.EnumSet;
 import java.util.stream.Collector;
@@ -67,12 +69,16 @@ final class RntbdConstants {
         IdleTimeoutInSeconds((short)0x0004, RntbdTokenType.ULong, false),
         UnauthenticatedTimeoutInSeconds((short)0x0005, RntbdTokenType.ULong, false);
 
-        public static final ImmutableMap<Short, RntbdContextHeader> map;
+        public static final ImmutableSet<RntbdContextHeader> internalSet = Sets.immutableEnumSet(EnumSet.allOf(RntbdContextHeader.class));
+        public static final Short2ObjectMap<RntbdContextHeader> map;
+//        public static final ShortSet set = new ShortOpenHashSet(internalSet.stream().map(e -> e.id).collect(Collectors.toList()));  // Sets.immutableEnumSet(EnumSet.allOf(RntbdContextHeader.class));
         public static final ImmutableSet<RntbdContextHeader> set = Sets.immutableEnumSet(EnumSet.allOf(RntbdContextHeader.class));
 
+
         static {
-            final Collector<RntbdContextHeader, ?, ImmutableMap<Short, RntbdContextHeader>> collector = ImmutableMap.toImmutableMap(RntbdContextHeader::id, h -> h);
-            map = set.stream().collect(collector);
+            final Collector<RntbdContextHeader, ?, ImmutableMap<Short, RntbdContextHeader>> collector = ImmutableMap.toImmutableMap(h -> h.id(), h -> h);
+            //  final Collector<Short, ?, ImmutableMap<Short, RntbdContextHeader>> collector = ImmutableMap.toImmutableMap(RntbdContextHeader::id, h -> h);
+            map = new Short2ObjectOpenHashMap<>(internalSet.stream().collect(collector));
         }
 
         private final short id;
@@ -104,12 +110,12 @@ final class RntbdConstants {
         ClientVersion((short)0x0001, RntbdTokenType.SmallString, true),
         UserAgent((short)0x0002, RntbdTokenType.SmallString, true);
 
-        public static final ImmutableMap<Short, RntbdContextRequestHeader> map;
+        public static final Short2ObjectMap<RntbdContextRequestHeader> map;
         public static final ImmutableSet<RntbdContextRequestHeader> set = Sets.immutableEnumSet(EnumSet.allOf(RntbdContextRequestHeader.class));
 
         static {
             final Collector<RntbdContextRequestHeader, ?, ImmutableMap<Short, RntbdContextRequestHeader>> collector = ImmutableMap.toImmutableMap(h -> h.id(), h -> h);
-            map = set.stream().collect(collector);
+            map = new Short2ObjectOpenHashMap<>(set.stream().collect(collector));
         }
 
         private final short id;
@@ -487,12 +493,12 @@ final class RntbdConstants {
         IsUserRequest((short)0x0067, RntbdTokenType.Byte, false),
         SharedOfferThroughput((short)0x0068, RntbdTokenType.ULong, false);
 
-        public static final ImmutableMap<Short, RntbdRequestHeader> map;
+        public static final Short2ObjectMap<RntbdRequestHeader> map;
         public static final ImmutableSet<RntbdRequestHeader> set = Sets.immutableEnumSet(EnumSet.allOf(RntbdRequestHeader.class));
 
         static {
             final Collector<RntbdRequestHeader, ?, ImmutableMap<Short, RntbdRequestHeader>> collector = ImmutableMap.toImmutableMap(RntbdRequestHeader::id, h -> h);
-            map = set.stream().collect(collector);
+            map = new Short2ObjectOpenHashMap<>(set.stream().collect(collector));
         }
 
         private final short id;
@@ -687,12 +693,12 @@ final class RntbdConstants {
         HasTentativeWrites((short)0x003D, RntbdTokenType.Byte, false),
         SessionToken((short)0x003E, RntbdTokenType.String, false);
 
-        public static final ImmutableMap<Short, RntbdResponseHeader> map;
+        public static final Short2ObjectMap<RntbdResponseHeader> map;
         public static final ImmutableSet<RntbdResponseHeader> set = Sets.immutableEnumSet(EnumSet.allOf(RntbdResponseHeader.class));
 
         static {
             final Collector<RntbdResponseHeader, ?, ImmutableMap<Short, RntbdResponseHeader>> collector = ImmutableMap.toImmutableMap(RntbdResponseHeader::id, header -> header);
-            map = set.stream().collect(collector);
+            map = new Short2ObjectOpenHashMap<>(set.stream().collect(collector));
         }
 
         private final short id;
